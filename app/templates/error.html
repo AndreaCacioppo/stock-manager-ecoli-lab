@@ -1,0 +1,12 @@
+{# error.html: fallback page for an unhandled 500 / database-busy
+   error. Rendered by the global
+   error handlers in app/__init__.py. #}
+{% extends "base.html" %}
+{% block title %}Errore{% endblock %}
+{% block content %}
+<div class="empty">
+  <div class="big">Si è verificato un errore</div>
+  <p>Riprova tra un momento. Se il problema persiste, contatta l'amministratore del sistema.</p>
+  <p><a class="btn btn-primary" href="{{ url_for('main.inventory') }}">Torna al magazzino</a></p>
+</div>
+{% endblock %}

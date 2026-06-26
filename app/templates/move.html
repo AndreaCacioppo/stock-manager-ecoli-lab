@@ -1,0 +1,42 @@
+{# move.html: move units from storage to the lab. When arriving from a row's
+   "Move" button, the batch is already selected: only the quantity is requested
+   (plus the label checkbox). The full form remains as a fallback. #}
+{% extends "base.html" %}
+{% block title %}Sposta in laboratorio{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Sposta in laboratorio</h1>
+  </div>
+</div>
+
+<div class="form-card card card-pad">
+  {% if form.supply_number.data %}
+  <p class="sub">Lotto selezionato (dal magazzino):</p>
+  <p><strong>ID lotto {{ form.supply_number.data }} — {{ form.product_name.data }}</strong>{% if form.manufacturer.data %} · {{ form.manufacturer.data }}{% endif %}{% if form.type.data %} · {{ form.type.data | it }}{% endif %}</p>
+  <form method="post" action="{{ url_for('main.move') }}">
+    {{ form.csrf_token }}
+    <input type="hidden" name="supply_number" value="{{ form.supply_number.data }}">
+    <div class="form-grid">
+      <div class="field">{{ form.quantity.label }} {{ form.quantity(autofocus=true) }}</div>
+      <button type="submit" class="btn btn-primary btn-block">Sposta</button>
+    </div>
+  </form>
+  {% else %}
+  <p class="hint">Compila l'ID lotto oppure il nome del prodotto. Se più lotti corrispondono, viene scelto quello in scadenza per primo.</p>
+  <form method="post" action="{{ url_for('main.move') }}">
+    {{ form.csrf_token }}
+    <div class="form-grid">
+      <div class="field">{{ form.supply_number.label }} {{ form.supply_number() }}</div>
+      <div class="field">{{ form.product_name.label }} {{ form.product_name(list="dl-products") }}</div>
+      <div class="field">{{ form.manufacturer.label }} {{ form.manufacturer(list="dl-manufacturers") }}</div>
+      <div class="field">{{ form.type.label }} {{ form.type() }}</div>
+      <div class="field">{{ form.quantity.label }} {{ form.quantity() }}</div>
+      <div class="field">{{ form.to_location.label }} {{ form.to_location(placeholder='laboratorio', list="dl-locations") }}</div>
+      <button type="submit" class="btn btn-primary">Sposta</button>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% include "_datalists.html" %}
+{% endblock %}

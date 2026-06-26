@@ -1,0 +1,13 @@
+# .gitattributes
+
+# Internal documentation
+README.md         export-ignore
+ARCHITECTURE.md   export-ignore
+deploy/README.md  export-ignore
+
+# Tests
+tests/            export-ignore
+
+# Repo metadata
+.gitignore        export-ignore
+.gitattributes    export-ignore

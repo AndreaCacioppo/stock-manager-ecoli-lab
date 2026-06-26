@@ -1,0 +1,42 @@
+{# login.html: the sign-in page. The one page that does not use the
+   base.html shell (no top bar before sign-in). #}
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LNR E. coli</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="auth-wrap">
+  <div class="auth-card">
+    <div class="brand">
+      <span class="mark">
+        <svg viewBox="0 0 24 24"><path d="M10 2v7.31"/><path d="M14 9.3V2"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/><path d="M5.52 16h12.96"/></svg>
+      </span>
+      <span>LNR E. coli</span>
+    </div>
+    <h1>Accedi</h1>
+    <p class="sub">Gestione scorte</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="post" action="{{ url_for('auth.login') }}" class="form-grid">
+      {{ form.csrf_token }}
+      <div class="field">
+        {{ form.username.label }}
+        {{ form.username(autofocus=true, autocomplete="username") }}
+      </div>
+      <div class="field">
+        {{ form.password.label }}
+        {{ form.password(autocomplete="current-password") }}
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Accedi</button>
+    </form>
+  </div>
+</body>
+</html>

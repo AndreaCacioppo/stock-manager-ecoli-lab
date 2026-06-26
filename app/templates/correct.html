@@ -1,0 +1,102 @@
+{# correct.html: admin corrections for one batch. Intake correction and a
+   compensating reversal of a logged entry. Both keep conservation intact. #}
+{% extends "base.html" %}
+{% block title %}Correggi lotto {{ batch.supply_number }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Correggi lotto {{ batch.supply_number }} — {{ batch.product_name }}</h1>
+    <p class="sub">Totale ricevuto registrato: {{ batch.received_total }}</p>
+  </div>
+</div>
+
+<section class="card card-pad">
+  <h2 class="mt-0">Correggi carico</h2>
+  <p class="hint">Usa per correggere la quantità registrata.</p>
+  <form method="post" action="{{ url_for('admin.correct_intake', supply_number=batch.supply_number) }}">
+    {{ intake_form.csrf_token }}
+    <div class="form-grid">
+      <div class="field">
+        {{ intake_form.new_total.label }}
+        {{ intake_form.new_total() }}
+      </div>
+      <div class="field">
+        {{ intake_form.reason.label }}
+        {{ intake_form.reason(size=50) }}
+      </div>
+      <div>
+        <button type="submit" class="btn btn-primary">Applica correzione carico</button>
+      </div>
+    </div>
+  </form>
+</section>
+
+<section class="card card-pad">
+  <h2 class="mt-0">Annulla una voce del registro</h2>
+  <p class="hint">Usa per restituire unità inserite erroneamente in archivio.</p>
+  <form method="post" action="{{ url_for('admin.correct_reverse', supply_number=batch.supply_number) }}">
+    {{ reverse_form.csrf_token }}
+    {{ reverse_form.supply_number(type='hidden') }}
+    <div class="form-grid">
+      <div class="field">
+        {{ reverse_form.ref_log_id.label }}
+        {{ reverse_form.ref_log_id() }}
+      </div>
+      <div class="field">
+        {{ reverse_form.quantity.label }}
+        {{ reverse_form.quantity() }}
+      </div>
+      <div class="field">
+        {{ reverse_form.to_state.label }}
+        {{ reverse_form.to_state() }}
+      </div>
+      <div class="field">
+        {{ reverse_form.reason.label }}
+        {{ reverse_form.reason(size=50) }}
+      </div>
+      <div>
+        <button type="submit" class="btn btn-primary">Applica annullamento</button>
+      </div>
+    </div>
+  </form>
+</section>
+
+<h2>Voci di registro per questo lotto</h2>
+{% if log_rows %}
+<div class="table-wrap scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>ID voce</th><th>Quando</th><th>Azione</th><th>Da</th><th>A</th>
+        <th class="right">Unità</th><th>Causale</th><th>Rif.</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in log_rows %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.timestamp | itdate }}</td>
+        <td>{{ r.action | it }}</td>
+        <td>{{ (r.from_state or '') | it }}</td>
+        <td>{{ (r.to_state or '') | it }}</td>
+        <td class="right num">{{ r.quantity }}</td>
+        <td>{{ (r.causale or '') | it }}</td>
+        <td>{{ r.ref_log_id or '' }}</td>
+        <td>
+          {% if r.to_state == 'archive' and r.quantity %}
+          <a class="btn btn-sm btn-secondary"
+             href="{{ url_for('admin.correct', supply_number=batch.supply_number, ref=r.id, qty=r.quantity) }}">Annulla questa voce</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty">
+  <div class="big">Nessuna voce di registro</div>
+  <p>Le correzioni e i movimenti di questo lotto compariranno qui.</p>
+</div>
+{% endif %}
+{% endblock %}

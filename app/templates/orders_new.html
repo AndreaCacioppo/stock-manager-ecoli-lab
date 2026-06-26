@@ -1,0 +1,82 @@
+{# orders_new.html: create one order containing several batches at once.
+   The FieldList of batch sub-forms is rendered as repeated rows; empty rows
+   (no product name) are ignored by the route. #}
+{% extends "base.html" %}
+{% block title %}Nuovo ordine{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Nuovo ordine</h1>
+    <p class="sub">Registra un ordine ricevuto e i lotti contenenti</p>
+  </div>
+</div>
+
+<form method="post" action="{{ url_for('admin.orders_new') }}">
+  {{ form.csrf_token }}
+
+  <div class="form-card card card-pad">
+    <div class="form-grid">
+      <div class="field">{{ form.order_date.label }} {{ form.order_date(placeholder='AAAA-MM-GG') }}</div>
+      <div class="field">{{ form.notes.label }} {{ form.notes(rows=2, cols=40) }}</div>
+    </div>
+  </div>
+
+  <h2>Lotti</h2>
+  <p class="hint">Compila solo le righe necessarie.</p>
+  <div class="table-wrap scroll">
+    <table class="grid-table">
+      <thead>
+        <tr>
+          <th>Tipo</th><th><span class="hdr-info">Nome prodotto <details class="info-pop"><summary class="info-i">i</summary><span class="info-text">Inserire nome completo del prodotto, inclusa quantità per ogni unità (se applicabile).</span></details></span></th><th>Produttore</th><th><span class="hdr-info">Codice lotto <details class="info-pop"><summary class="info-i">i</summary><span class="info-text">Codice del lotto determinato dal produttore.</span></details></span></th>
+          <th>Scadenza</th><th>Controllo qualità</th><th>Unità</th><th>Posizione</th>
+        </tr>
+      </thead>
+      <tbody id="batch-rows">
+        {# Subfields are accessed with bracket notation because one is named "type",
+           which would otherwise collide with WTForms' own Field.type attribute. #}
+        {% for row in form.batches %}
+        <tr>
+          <td>{{ row['type']() }}</td>
+          <td>{{ row['product_name'](list="dl-products") }}</td>
+          <td>{{ row['manufacturer'](list="dl-manufacturers") }}</td>
+          <td>{{ row['batch_code'](list="dl-batch-codes") }}</td>
+          <td>{{ row['expiring_date'](placeholder='AAAA-MM-GG') }}</td>
+          <td>{{ row['quality_flag']() }}</td>
+          <td>{{ row['quantity']() }}</td>
+          <td>{{ row['location'](list="dl-locations") }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="add-row-wrap">
+    <button type="button" class="btn btn-sm btn-secondary" onclick="addOrderRow()">
+      <svg class="ico" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Aggiungi riga
+    </button>
+  </div>
+
+  <button type="submit" class="btn btn-primary order-submit">Crea ordine</button>
+</form>
+<script>
+  // "Aggiungi riga": clone the last lot row and renumber its fields so the
+  // WTForms FieldList on the server also processes the extra lot.
+  function addOrderRow() {
+    var tbody = document.getElementById('batch-rows');
+    var rows = tbody.querySelectorAll('tr');
+    var i = rows.length;
+    var clone = rows[rows.length - 1].cloneNode(true);
+    clone.querySelectorAll('input, select, textarea').forEach(function (el) {
+      ['name', 'id'].forEach(function (a) {
+        var v = el.getAttribute(a);
+        if (v) el.setAttribute(a, v.replace(/batches-\d+-/, 'batches-' + i + '-'));
+      });
+      if (el.tagName === 'SELECT') el.selectedIndex = 0;
+      else if (el.type === 'checkbox') el.checked = false;
+      else el.value = '';
+    });
+    tbody.appendChild(clone);
+  }
+</script>
+{% include "_datalists.html" %}
+{% endblock %}

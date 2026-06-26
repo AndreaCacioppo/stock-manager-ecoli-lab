@@ -1,0 +1,16 @@
+{# _datalists.html: option lists for the typeahead inputs. Included by the
+   data-entry forms; an input opts in with list="dl-...". Values come from the
+   autocomplete() context helper (the distinct values already in the database). #}
+{% set ac = autocomplete() %}
+<datalist id="dl-products">
+  {% for v in ac.products %}<option value="{{ v }}">{% endfor %}
+</datalist>
+<datalist id="dl-manufacturers">
+  {% for v in ac.manufacturers %}<option value="{{ v }}">{% endfor %}
+</datalist>
+<datalist id="dl-locations">
+  {% for v in ac.locations %}<option value="{{ v }}">{% endfor %}
+</datalist>
+<datalist id="dl-batch-codes">
+  {% for v in ac.batch_codes %}<option value="{{ v }}">{% endfor %}
+</datalist>

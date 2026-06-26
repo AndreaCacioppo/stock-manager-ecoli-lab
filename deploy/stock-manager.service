@@ -1,0 +1,35 @@
+# stock-manager.service — systemd unit (install to /etc/systemd/system/).
+#
+# Keeps gunicorn running 24/7 and restarts it on crash or reboot.
+# Assumes the project lives at /opt/stock-manager and runs as a dedicated
+# unprivileged user `stock`. Adjust User/Group/paths if you chose differently.
+
+[Unit]
+Description=Lab Stock Manager (Flask + gunicorn)
+After=network.target
+
+[Service]
+# Dedicated unprivileged user — NOT root, NOT a shared account.
+User=stock
+Group=stock
+WorkingDirectory=/opt/stock-manager
+
+# Marks the session cookie "Secure" (HTTPS-only).
+# Set to 1 only once the server is reachable over HTTPS;
+# otherwise browsers will not send the cookie and login will not persist.
+Environment=COOKIE_SECURE=1
+
+ExecStart=/opt/stock-manager/.venv/bin/gunicorn -c /opt/stock-manager/deploy/gunicorn.conf.py wsgi:app
+Restart=always
+RestartSec=3
+
+# --- hardening: limit what a compromised app process can touch ---
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+# The app only needs to write its own database and label PDFs.
+ReadWritePaths=/opt/stock-manager/instance /opt/stock-manager/labels
+
+[Install]
+WantedBy=multi-user.target

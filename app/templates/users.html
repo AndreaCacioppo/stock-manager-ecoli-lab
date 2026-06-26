@@ -1,0 +1,105 @@
+{# users.html: admin-only account management. Create, change role, reset
+   password, and deactivate/reactivate. Every action is a CSRF POST and is
+   audited in the master log. An admin cannot change another admin's role, reset
+   their password, or deactivate them (also guarded in app/db.py). Deactivated
+   accounts live in a collapsed "archive" so the active list stays clean. #}
+{% extends "base.html" %}
+{% block title %}Utenti{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Utenti</h1>
+  </div>
+</div>
+
+<section class="card card-pad">
+  <h2 class="mt-0">Aggiungi un utente</h2>
+  <form method="post" action="{{ url_for('admin.users_new') }}">
+    {{ create_form.csrf_token }}
+    <div class="form-grid">
+      <div class="field">
+        {{ create_form.username.label }}
+        {{ create_form.username() }}
+      </div>
+      <div class="field">
+        {{ create_form.password.label }}
+        {{ create_form.password() }}
+      </div>
+      <div>
+        <button type="submit" class="btn btn-primary">Crea utente</button>
+      </div>
+    </div>
+  </form>
+</section>
+
+<h2>Account</h2>
+<div class="table-wrap scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>Nome utente</th><th>Ruolo</th>
+        <th>Reimposta password</th><th>Disattiva</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users if u.active %}
+      <tr>
+        <td>{{ u.username }}</td>
+        <td><span class="badge {{ 'blue' if u.role=='admin' else 'gray' }}">{{ u.role | it }}</span></td>
+        <td>
+          {% if u.role == 'admin' and u.id != current_user.id %}
+          <span class="hint" title="Non puoi reimpostare la password di un altro amministratore">—</span>
+          {% else %}
+          <form method="post" action="{{ url_for('admin.users_reset_password', user_id=u.id) }}" class="inline">
+            {{ reset_form.csrf_token }}
+            <input type="password" name="new_password" placeholder="nuova password" required>
+            <button type="submit" class="btn btn-sm btn-secondary">Reimposta</button>
+          </form>
+          {% endif %}
+        </td>
+        <td>
+          {% if u.role == 'admin' and u.id != current_user.id %}
+          <span class="hint" title="Non puoi disattivare un altro amministratore">—</span>
+          {% else %}
+          <form method="post" action="{{ url_for('admin.users_deactivate', user_id=u.id) }}" class="inline">
+            {{ confirm_form.csrf_token }}
+            <button type="submit" class="btn btn-sm btn-danger">Disattiva</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{# Deactivated accounts go in a collapsed "archive" section so the active list
+   stays uncluttered. Shown only when there is at least one. #}
+{% set inactive = users | rejectattr('active') | list %}
+{% if inactive %}
+<details class="user-archive">
+  <summary>Utenti disattivati ({{ inactive | length }})</summary>
+  <div class="table-wrap scroll">
+    <table>
+      <thead>
+        <tr><th>Nome utente</th><th>Ruolo</th><th>Riattiva</th></tr>
+      </thead>
+      <tbody>
+        {% for u in inactive %}
+        <tr class="bad">
+          <td>{{ u.username }}</td>
+          <td><span class="badge {{ 'blue' if u.role=='admin' else 'gray' }}">{{ u.role | it }}</span></td>
+          <td>
+            <form method="post" action="{{ url_for('admin.users_reactivate', user_id=u.id) }}" class="inline">
+              {{ confirm_form.csrf_token }}
+              <button type="submit" class="btn btn-sm btn-secondary">Riattiva</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</details>
+{% endif %}
+{% endblock %}

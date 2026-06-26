@@ -1,0 +1,50 @@
+{# archive_list.html: append-only history of units that left active stock. #}
+{% extends "base.html" %}
+{% block title %}Archivio{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Archivio</h1>
+    <p class="sub">Unità uscite dalle scorte attive, al netto dei ripristini.</p>
+  </div>
+</div>
+
+{% if rows %}
+<div class="table-wrap scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>ID lotto</th><th>Prodotto</th>
+        <th>Unità</th><th>Causale</th><th>Data e ora archiviazione</th><th>Da</th><th>Azioni</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.supply_number }}</td>
+        <td>{{ r.product_name }}</td>
+        <td class="num">{{ r.quantity - r.restored_qty }}</td>
+        <td>
+          {% if r.causale == 'consumed' %}<span class="badge gray">{{ r.causale | it }}</span>
+          {% elif r.causale == 'expired' %}<span class="badge amber">{{ r.causale | it }}</span>
+          {% elif r.causale == 'ineligible' %}<span class="badge red">{{ r.causale | it }}</span>
+          {% elif r.causale == 'removed' %}<span class="badge red">{{ r.causale | it }}</span>
+          {% else %}<span class="badge blue">{{ r.causale | it }}</span>{% endif %}
+        </td>
+        <td>{{ r.timestamp | itdate }}</td>
+        <td>{{ r.username or '-' }}</td>
+        <td>
+          <a class="btn btn-sm btn-secondary" href="{{ url_for('admin.archive_restore', archive_id=r.id) }}">Ripristina in magazzino</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty">
+  <div class="big">Archivio vuoto</div>
+  <p>Nessuna unità è ancora uscita dalle scorte attive.</p>
+</div>
+{% endif %}
+{% endblock %}

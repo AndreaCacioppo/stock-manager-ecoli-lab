@@ -1,0 +1,43 @@
+{# archive_action.html: consume / mark expired / unsuitable (units -> archive).
+   When arriving from a row button, the batch is already selected: only the quantity is requested.
+   The full form remains as a fallback (direct access, without a batch). #}
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ title }}</h1>
+  </div>
+</div>
+
+<div class="form-card card card-pad">
+  {% if form.supply_number.data %}
+  <p class="sub">Lotto selezionato{% if form.from_state.data %} (da {{ form.from_state.data | it }}){% endif %}:</p>
+  <p><strong>ID lotto {{ form.supply_number.data }} — {{ form.product_name.data }}</strong>{% if form.manufacturer.data %} · {{ form.manufacturer.data }}{% endif %}{% if form.type.data %} · {{ form.type.data | it }}{% endif %}</p>
+  <form method="post">
+    {{ form.csrf_token }}
+    <input type="hidden" name="supply_number" value="{{ form.supply_number.data }}">
+    <input type="hidden" name="from_state" value="{{ form.from_state.data or 'lab' }}">
+    <div class="form-grid">
+      <div class="field">{{ form.quantity.label }} {{ form.quantity(autofocus=true) }}</div>
+      <button type="submit" class="btn btn-primary btn-block">{{ title }}</button>
+    </div>
+  </form>
+  {% else %}
+  <p class="hint">Compila l'ID lotto oppure il nome del prodotto. Se più lotti corrispondono, viene scelto quello in scadenza per primo.</p>
+  <form method="post">
+    {{ form.csrf_token }}
+    <div class="form-grid">
+      <div class="field">{{ form.supply_number.label }} {{ form.supply_number() }}</div>
+      <div class="field">{{ form.product_name.label }} {{ form.product_name(list="dl-products") }}</div>
+      <div class="field">{{ form.manufacturer.label }} {{ form.manufacturer(list="dl-manufacturers") }}</div>
+      <div class="field">{{ form.type.label }} {{ form.type() }}</div>
+      <div class="field">{{ form.from_state.label }} {{ form.from_state() }}</div>
+      <div class="field">{{ form.quantity.label }} {{ form.quantity() }}</div>
+      <button type="submit" class="btn btn-primary">{{ title }}</button>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% include "_datalists.html" %}
+{% endblock %}

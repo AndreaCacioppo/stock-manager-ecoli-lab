@@ -1,0 +1,55 @@
+{# log.html: master log viewer with CSV / JSONL export buttons. #}
+{% extends "base.html" %}
+{% block title %}Registro{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Registro</h1>
+    <p class="sub">Registro di controllo solo-aggiunta.</p>
+  </div>
+</div>
+
+<div class="toolbar">
+  <a class="btn btn-sm {{ 'btn-primary' if periodo == 'mese' else 'btn-secondary' }}" href="{{ url_for('admin.log', periodo='mese') }}">Ultimo mese</a>
+  <a class="btn btn-sm {{ 'btn-primary' if periodo == 'anno' else 'btn-secondary' }}" href="{{ url_for('admin.log', periodo='anno') }}">Ultimo anno</a>
+  <a class="btn btn-sm {{ 'btn-primary' if periodo == 'tutto' else 'btn-secondary' }}" href="{{ url_for('admin.log', periodo='tutto') }}">Da sempre</a>
+  <span class="spacer"></span>
+  <a class="btn btn-sm btn-secondary" href="{{ url_for('admin.log_export', fmt='csv') }}">Esporta CSV</a>
+  <a class="btn btn-sm btn-secondary" href="{{ url_for('admin.log_export', fmt='jsonl') }}">Esporta JSONL</a>
+</div>
+
+{% if rows %}
+<div class="table-wrap scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>ID operazione</th><th>Quando</th><th>Utente</th><th>Azione</th><th>ID lotto</th>
+        <th>Da</th><th>A</th><th class="right">Unità</th><th>Causale</th><th>Rif.</th><th>Dettagli</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.timestamp | itdate }}</td>
+        <td>{{ r.username or '-' }}</td>
+        <td><span class="badge {{ 'blue' if r.action == 'correction' else 'gray' }}">{{ r.action | it }}</span></td>
+        <td>{{ r.supply_number or '' }}</td>
+        <td>{{ (r.from_state or '') | it }}</td>
+        <td>{{ (r.to_state or '') | it }}</td>
+        <td class="right num">{{ r.quantity if r.quantity is not none else '' }}</td>
+        <td>{% if r.causale %}<span class="badge {{ 'blue' if r.causale == 'correction' else 'gray' }}">{{ r.causale | it }}</span>{% endif %}</td>
+        <td>{{ r.ref_log_id or '' }}</td>
+        <td class="details">{{ r.details or '' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty">
+  <div class="big">Nessuna voce di registro</div>
+  <p>Le azioni compariranno qui non appena vengono registrati o spostati articoli.</p>
+</div>
+{% endif %}
+{% endblock %}

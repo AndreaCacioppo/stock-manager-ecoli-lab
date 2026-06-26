@@ -1,0 +1,87 @@
+{# stock_list.html: inventory or lab browse table (read-only listing). #}
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ title }}</h1>
+    <p class="sub">{% if state == 'inventory' %}In magazzino{% else %}In laboratorio{% endif %}</p>
+  </div>
+</div>
+
+{% if rows %}
+<div class="table-wrap menus">
+  <table>
+    <thead>
+      <tr>
+        <th>ID lotto</th><th>Tipo</th><th>Prodotto</th><th>Produttore</th>
+        <th>Codice lotto</th><th>Scadenza</th><th>Controllo qualità</th>
+        <th>Unità</th>
+        <th>Azioni</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.supply_number }}</td>
+        <td><span class="badge gray">{{ r.type | it }}</span></td>
+        <td>{{ r.product_name }}</td>
+        <td>{{ r.manufacturer }}</td>
+        <td>{{ r.batch_code }}</td>
+        <td>
+          {% if r.expiring_date %}{{ r.expiring_date | itdate }}{% if r.expiring_date < today %}<br><span class="badge red"><span class="dot"></span>Scaduto</span>{% elif r.expiring_date <= cutoff %}<br><span class="badge amber"><span class="dot"></span>In scadenza</span>{% endif %}{% else %}<span class="badge gray">mai</span>{% endif %}
+        </td>
+        <td>{% if r.quality_flag %}<span class="badge amber">Sì</span>{% else %}<span class="badge gray">No</span>{% endif %}</td>
+        <td class="num">{{ r.quantity }}{% if r.product_name in low_products %}<br><span class="badge amber"><span class="dot"></span>In esaurimento</span>{% endif %}</td>
+        <td>
+          <div class="row-actions">
+            {% if state == 'inventory' %}
+            <a class="btn btn-sm btn-primary" href="{{ url_for('main.move', supply_number=r.supply_number, product_name=r.product_name, manufacturer=r.manufacturer, type=r.type) }}">
+              <svg class="ico" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg> Sposta
+            </a>
+            {% else %}
+            <a class="btn btn-sm btn-primary" href="{{ url_for('main.consume', supply_number=r.supply_number, from_state='lab', product_name=r.product_name, manufacturer=r.manufacturer, type=r.type) }}">
+              <svg class="ico" viewBox="0 0 24 24"><path d="M21.8 10A10 10 0 1 1 17 3.3"/><path d="m9 11 3 3L22 4"/></svg> Consuma
+            </a>
+            {% endif %}
+            {% if state == 'lab' %}
+            {# Icon-only: generates the label PDF on demand (main.label) and opens
+               it in a new tab, ready to print. No label is made during the move. #}
+            <a class="btn btn-sm btn-secondary" href="{{ url_for('main.label', supply_number=r.supply_number) }}" target="_blank" title="Genera / stampa etichetta" aria-label="Genera etichetta">
+              <svg class="ico" viewBox="0 0 24 24"><path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8 8a2 2 0 0 0 2.8 0l7.2-7.2a2 2 0 0 0 0-2.8z"/><path d="M7.5 7.5h.01"/></svg>
+            </a>
+            {% endif %}
+            <details class="menu row-menu">
+              <summary class="btn btn-sm btn-secondary" title="Altre azioni">&#8943;</summary>
+              <div class="menu-panel right">
+                <a href="{{ url_for('main.expired', supply_number=r.supply_number, from_state=state, product_name=r.product_name, manufacturer=r.manufacturer, type=r.type) }}">Segna come scaduto</a>
+                <a href="{{ url_for('main.ineligible', supply_number=r.supply_number, from_state=state, product_name=r.product_name, manufacturer=r.manufacturer, type=r.type) }}">Segna come non idoneo</a>
+                {% if current_user.is_admin %}
+                <div class="menu-sep"></div>
+                <a href="{{ url_for('admin.correct', supply_number=r.supply_number) }}">Correggi carico</a>
+                <form action="{{ url_for('admin.remove_batch', supply_number=r.supply_number) }}"
+                      method="post"
+                      onsubmit="return confirm('Rimuovere il lotto {{ r.supply_number }}? Viene archiviato, non eliminato.');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="as-link danger">Rimuovi lotto</button>
+                </form>
+                {% endif %}
+              </div>
+            </details>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty">
+  <div class="big">Niente qui</div>
+  <p>Nessun articolo è attualmente presente in questa posizione.</p>
+  {% if current_user.is_admin and state == 'inventory' %}
+  <p><a class="btn btn-primary" href="{{ url_for('admin.orders_new') }}">Registra il primo ordine</a></p>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

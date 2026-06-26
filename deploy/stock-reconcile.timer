@@ -1,0 +1,17 @@
+# stock-reconcile.timer — run the conservation check every night at ~02:30.
+#
+# Persistent=true means a run missed while the machine was off fires at the next
+# boot, so the check never silently skips. Enable with:
+#   systemctl enable --now stock-reconcile.timer
+# Inspect with:  systemctl list-timers stock-reconcile.timer
+
+[Unit]
+Description=Run Stock Manager reconcile nightly
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

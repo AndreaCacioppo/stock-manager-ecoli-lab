@@ -1,0 +1,42 @@
+{# thresholds.html: per-product low-stock thresholds (admin only). The minimum
+   inventory level at/under which a product is flagged "in esaurimento". #}
+{% extends "base.html" %}
+{% block title %}Soglie{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Soglie scorta bassa</h1>
+    <p class="sub">Imposta la quantità minima in magazzino per prodotto. Quando la scorta scende a quel livello (o sotto), il prodotto compare in "In esaurimento". Lascia vuoto per non monitorarlo.</p>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>Prodotto</th><th class="right">In magazzino</th><th>Soglia minima</th><th>Stato</th></tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr class="{{ 'bad' if r.min_qty is not none and r.inv_qty <= r.min_qty else '' }}">
+        <td>{{ r.product_name }}</td>
+        <td class="right num">{{ r.inv_qty }}</td>
+        <td>
+          <form method="post" action="{{ url_for('admin.thresholds') }}" class="inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="product_name" value="{{ r.product_name }}">
+            <input type="number" name="min_qty" min="0" style="width:5.5rem"
+                   value="{{ r.min_qty if r.min_qty is not none else '' }}" placeholder="—">
+            <button type="submit" class="btn btn-sm btn-secondary">Salva</button>
+          </form>
+        </td>
+        <td>
+          {% if r.min_qty is none %}<span class="badge gray">non monitorato</span>
+          {% elif r.inv_qty <= r.min_qty %}<span class="badge red"><span class="dot"></span>in esaurimento</span>
+          {% else %}<span class="badge green">ok</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

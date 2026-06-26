@@ -1,0 +1,35 @@
+# stock-reconcile.service — nightly conservation check (triggered by the .timer).
+#
+# Runs the read-only `manage.py reconcile`, which re-derives the conservation
+# invariant (received_total == inventory + lab + archived) for every batch.
+# A mismatch makes the command exit non-zero, so this unit ends in a FAILED
+# state — visible in `systemctl status stock-reconcile` and journald.
+#
+# No e-mail on failure: check results from the journal (see deploy/README.md
+# "Checking reconcile & backups"):
+#   journalctl -u stock-reconcile.service | grep -E 'OK:|MISMATCH'
+#
+# Install (run as root on the server):
+#   cp deploy/stock-reconcile.{service,timer} /etc/systemd/system/
+#   systemctl daemon-reload
+#   systemctl enable --now stock-reconcile.timer
+# Check it by hand any time with:  systemctl start stock-reconcile.service
+
+[Unit]
+Description=Stock Manager nightly reconcile (conservation check)
+After=network.target
+
+[Service]
+Type=oneshot
+User=stock
+Group=stock
+WorkingDirectory=/opt/stock-manager
+ExecStart=/opt/stock-manager/.venv/bin/python /opt/stock-manager/manage.py reconcile
+
+# Same sandbox posture as the main service. The check only reads, but SQLite in
+# WAL mode still needs to touch the -wal/-shm sidecars, so instance/ is writable.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/opt/stock-manager/instance

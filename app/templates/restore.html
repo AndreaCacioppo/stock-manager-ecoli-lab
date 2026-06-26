@@ -1,0 +1,28 @@
+{# restore.html: admin bringa some units of an archived (by-mistake) entry
+   back into inventory. Asks how many; a partial restore is allowed. #}
+{% extends "base.html" %}
+{% block title %}Ripristina in magazzino{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Ripristina in magazzino</h1>
+  </div>
+</div>
+
+<div class="form-card card card-pad">
+  <p class="sub">Voce di archivio selezionata:</p>
+  <p><strong>ID lotto {{ entry.supply_number }} — {{ entry.product_name }}</strong> · {{ entry.causale | it }} · {{ entry.timestamp | itdate }}</p>
+  <p class="hint">Disponibili da ripristinare: {{ remaining }} unità.</p>
+  <form method="post" action="{{ url_for('admin.archive_restore', archive_id=entry.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-grid">
+      <div class="field">
+        <label for="quantity">Unità da ripristinare</label>
+        <input type="number" id="quantity" name="quantity" min="1" max="{{ remaining }}"
+               value="{{ remaining }}" required autofocus>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Ripristina in magazzino</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

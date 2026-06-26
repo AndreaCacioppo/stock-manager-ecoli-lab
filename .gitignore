@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Instance-specific, secret key + live database
+instance/
+*.db
+*.db-wal
+*.db-shm
+
+# Generated label PDFs
+labels/
+*.pdf
+
+# Personal
+notes/

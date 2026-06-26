@@ -1,0 +1,34 @@
+# stock-backup.service — nightly SQLite backup (triggered by the .timer).
+#
+# Runs deploy/backup.sh, which writes a consistent snapshot of instance/stock.db
+# to /var/backups/stock-manager and prunes snapshots older than 30 days.
+#
+# A failed run leaves this unit FAILED — check it with
+# `systemctl status stock-backup` or the journal (see deploy/README.md).
+#
+# Install (run as root on the server):
+#   cp deploy/stock-backup.{service,timer} /etc/systemd/system/
+#   install -d -o stock -g stock /var/backups/stock-manager
+#   systemctl daemon-reload
+#   systemctl enable --now stock-backup.timer
+# Run a backup by hand with:  systemctl start stock-backup.service
+
+[Unit]
+Description=Stock Manager nightly database backup
+After=network.target
+
+[Service]
+Type=oneshot
+User=stock
+Group=stock
+WorkingDirectory=/opt/stock-manager
+ExecStart=/opt/stock-manager/deploy/backup.sh
+
+# Instance/ is read (WAL mode still
+# touches the -wal/-shm sidecars), and the snapshot directory is the one extra
+# writable path.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/opt/stock-manager/instance /var/backups/stock-manager
